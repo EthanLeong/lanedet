@@ -13,7 +13,8 @@ from .scheduler import build_scheduler
 from lanedet.datasets import build_dataloader
 from lanedet.utils.recorder import build_recorder
 from lanedet.utils.net_utils import save_model, load_network
-from mmcv.parallel import MMDataParallel 
+from mmcv.parallel import MMDataParallel
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Runner(object):
@@ -54,7 +55,7 @@ class Runner(object):
             batch[k] = batch[k].cuda()
         return batch
     
-    def train_epoch(self, epoch, train_loader):
+    def train_epoch(self, epoch, train_loader, writer):
         self.net.train()
         end = time.time()
         max_iter = len(train_loader)
@@ -78,20 +79,22 @@ class Runner(object):
             self.recorder.update_loss_stats(output['loss_stats'])
             self.recorder.batch_time.update(batch_time)
             self.recorder.data_time.update(date_time)
-
+            lr = self.optimizer.param_groups[0]['lr']
             if i % self.cfg.log_interval == 0 or i == max_iter - 1:
-                lr = self.optimizer.param_groups[0]['lr']
                 self.recorder.lr = lr
                 self.recorder.record('train')
+            writer.add_scalar('train/learning rate', lr, i)
+            writer.add_scalar('train/seg_loss', loss, i)
 
     def train(self):
         self.recorder.logger.info('Build train loader...')
         train_loader = build_dataloader(self.cfg.dataset.train, self.cfg, is_train=True)
+        writer = SummaryWriter(self.cfg.work_dir + '/tf_log')
 
         self.recorder.logger.info('Start training...')
         for epoch in range(self.cfg.epochs):
             self.recorder.epoch = epoch
-            self.train_epoch(epoch, train_loader)
+            self.train_epoch(epoch, train_loader, writer)
             if (epoch + 1) % self.cfg.save_ep == 0 or epoch == self.cfg.epochs - 1:
                 self.save_ckpt()
             if (epoch + 1) % self.cfg.eval_ep == 0 or epoch == self.cfg.epochs - 1:
@@ -100,6 +103,8 @@ class Runner(object):
                 break
             if self.cfg.lr_update_by_epoch:
                 self.scheduler.step()
+
+        writer.close()
 
     def validate(self):
         if not self.val_loader:
