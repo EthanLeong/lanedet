@@ -65,6 +65,7 @@ class OpenLane(BaseDataset):
         lanes = [lane for lane in lanes if len(lane) > 3]  # remove lanes with less than 2 points
 
         lanes = [sorted(lane, key=lambda x: x[1]) for lane in lanes]  # sort by y
+        lanes = sorted(lanes, key=lambda x: x[0])
         infos['lanes'] = lanes
 
         return infos

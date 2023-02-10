@@ -55,8 +55,8 @@ scheduler = dict(
 )
 
 seg_loss_weight = 1.0
-eval_ep = 6
-save_ep = epochs
+eval_ep = 2
+save_ep = 2
 
 bg_weight = 0.4
 
