@@ -44,9 +44,9 @@ class OpenLane(BaseDataset):
             mask_path = os.path.join(self.data_root, mask_line)
             infos['mask_path'] = mask_path
 
-        if len(line) > 2:
-            exist_list = [int(l) for l in line[2:]]
-            infos['lane_exist'] = np.array(exist_list)
+        # if len(line) > 2:
+        #     exist_list = [int(l) for l in line[2:]]
+        #     infos['lane_exist'] = np.array(exist_list)
 
         anno_path = img_path[:-3] + 'json'  # remove sufix jpg and add lines.txt
         anno_path = anno_path.replace('img', 'lane3d_1000_v1.2/lane3d_1000')
@@ -65,7 +65,7 @@ class OpenLane(BaseDataset):
         lanes = [lane for lane in lanes if len(lane) > 3]  # remove lanes with less than 2 points
 
         lanes = [sorted(lane, key=lambda x: x[1]) for lane in lanes]  # sort by y
-        lanes = sorted(lanes, key=lambda x: x[0])
+        # lanes = sorted(lanes, key=lambda x: x[0])  # sort by x
         infos['lanes'] = lanes
 
         return infos

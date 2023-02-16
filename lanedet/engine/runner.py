@@ -68,6 +68,10 @@ class Runner(object):
             output = self.net(data)
             self.optimizer.zero_grad()
             loss = output['loss']
+
+            lr = self.optimizer.param_groups[0]['lr']
+            writer.add_scalar('train/learning rate', lr, i)
+            writer.add_scalar('train/seg_loss', loss, i)
             loss.backward()
             self.optimizer.step()
             if not self.cfg.lr_update_by_epoch:
@@ -79,12 +83,9 @@ class Runner(object):
             self.recorder.update_loss_stats(output['loss_stats'])
             self.recorder.batch_time.update(batch_time)
             self.recorder.data_time.update(date_time)
-            lr = self.optimizer.param_groups[0]['lr']
             if i % self.cfg.log_interval == 0 or i == max_iter - 1:
                 self.recorder.lr = lr
                 self.recorder.record('train')
-            writer.add_scalar('train/learning rate', lr, i)
-            writer.add_scalar('train/seg_loss', loss, i)
 
     def train(self):
         self.recorder.logger.info('Build train loader...')
